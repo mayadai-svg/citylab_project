@@ -6,7 +6,7 @@ def generate_launch_description():
     
     # Nodes
     patrol_node = launch_ros.actions.Node(
-        package='citylab_project',
+        package='robot_patrol',
         executable='patrol',
         arguments=[],
         output='screen',
