@@ -1,14 +1,17 @@
-#include <memory>
 #include <cmath>
+#include <limits>
+#include <map>
+#include <memory>
 
 #include "geometry_msgs/msg/detail/point__struct.hpp"
 #include "geometry_msgs/msg/detail/pose__struct.hpp"
 #include "geometry_msgs/msg/point.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
+#include "geometry_msgs/msg/twist.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "std_msgs/msg/string.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
+#include "std_msgs/msg/string.hpp"
 
 // 1- Create C++ class called Patrol
 // 2- Subscribe to laser topic and capture rays
@@ -54,6 +57,8 @@ public:
 
 private:
   // variables
+  double direction_ =
+      0.0; // Initialize direction_ to 0.0 radians (facing forward)
 
   // publishers & subscribers
   rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr
@@ -65,13 +70,13 @@ private:
 
     // Define sectors and minimum distances for obstacle detection
     std::map<std::string, std::pair<int, int>> sectors = {
-      {"right", {37, 62}},
-      {"front_right", {63, 99}},
-      {"front_left", {100, 137}},
-      {"left", {133, 162}}};
-    
+        {"right", {37, 62}},
+        {"front_right", {63, 99}},
+        {"front_left", {100, 137}},
+        {"left", {133, 162}}};
+
     std::map<std::string, double> min_distances;
-    for (const auto& sector : sectors) {
+    for (const auto &sector : sectors) {
       double min_distance = std::numeric_limits<double>::infinity();
       for (int i = sector.second.first; i <= sector.second.second; ++i) {
         if (laser_msg->ranges[i] < min_distance) {
@@ -83,19 +88,80 @@ private:
 
     double obstacle_threshold = 0.35; // 35 cm
 
-    std::map<std::string, bool>detections;
-    for (const auto& [sector, min_distance] : min_distances) {
+    std::map<std::string, bool> detections;
+    for (const auto &[sector, min_distance] : min_distances) {
       if (min_distance < obstacle_threshold) {
         detections[sector] = min_distance < obstacle_threshold;
       }
     }
-    RCLCPP_INFO(this->get_logger(), "Obstacle detections: right: %s, front_right: %s, front_left: %s, left: %s",
+    RCLCPP_INFO(this->get_logger(),
+                "Obstacle detections: right: %s, front_right: %s, front_left: "
+                "%s, left: %s",
                 detections["right"] ? "true" : "false",
                 detections["front_right"] ? "true" : "false",
                 detections["front_left"] ? "true" : "false",
                 detections["left"] ? "true" : "false");
+
+    safest_direction(laser_msg);
+    double angular_velocity = direction_ / 2.0;
+    move_rover(0.1, 0.0, angular_velocity);
   }
 
+  void move_rover(double x, double y, double w) {
+    // Here you have the callback method
+    // create a Twist message
+    auto msg = geometry_msgs::msg::Twist();
+    // define the linear x-axis velocity of /cmd_vel Topic parameter
+    msg.linear.x = x;
+    msg.linear.y = y;
+    // define the angular z-axis velocity of /cmd_vel Topic parameter
+    msg.angular.z = w;
+    // Publish the message to the Topic
+    vel_publisher_->publish(msg);
+  }
+
+  void
+  safest_direction(const sensor_msgs::msg::LaserScan::SharedPtr laser_msg) {
+    // Implement logic to find the safest direction based on laser scan data
+    // 1- Identify the ray with the greatest distance to an obstacle (which is
+    // not an inf) 2- Get its corresponding angle with respect to the robot's
+    // front X axis Note: The angle must be between  −𝜋/2 and  𝜋/2 (in radians)
+    // 3- Store that angle in the class variable named direction_
+
+    if (laser_msg->ranges.empty()) {
+      direction_ = 0.0;
+      return;
+    }
+
+    size_t best_ray_index = 0;
+    double best_valid_range = -1.0;
+    for (size_t i = 0; i < laser_msg->ranges.size(); ++i) {
+      double range = laser_msg->ranges[i];
+      if (!std::isfinite(range)) {
+        continue;
+      }
+      if (range > best_valid_range) {
+        best_valid_range = range;
+        best_ray_index = i;
+      }
+    }
+
+    if (best_valid_range < 0.0) {
+      direction_ = 0.0;
+      return;
+    }
+
+    double angle =
+        laser_msg->angle_min + best_ray_index * laser_msg->angle_increment;
+    double half_pi = std::acos(-1.0) / 2.0;
+    if (angle < -half_pi) {
+      angle = -half_pi;
+    } else if (angle > half_pi) {
+      angle = half_pi;
+    }
+
+    direction_ = angle;
+  }
 };
 
 int main(int argc, char **argv) {
