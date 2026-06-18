@@ -76,8 +76,6 @@ private:
       min_distances["front"] = front_min;
       obstacle_detection++; // Front is blocked, increment obstacle detection count
 
-      RCLCPP_INFO(this->get_logger(), "Obstacle Detected: FRONT");
-
       // --- PRIORITY 2: Scan Right Sector (Only because Front is blocked) ---
       double right_min = std::numeric_limits<double>::infinity();
       for (size_t i = 0; i < laser_msg->ranges.size(); ++i) {
@@ -140,12 +138,16 @@ private:
     // CASE 1: Front blocked -> Instantly choose Right sector center
     if (obstacle_detection == 1) {
       direction_ = (-M_PI / 2.0 + -M_PI / 12.0) / 2.0; 
+
+      RCLCPP_INFO(this->get_logger(), "Obstacle Detected: Front. Turning Right........");
+
       return;
     } 
 
     // CASE 2: Front & Right blocked -> Instantly choose Left sector center
     if (obstacle_detection == 2) {
-      direction_ = (M_PI / 12.0 + M_PI / 2.0) / 2.0; 
+      direction_ = (M_PI / 12.0 + M_PI / 2.0) / 2.0;
+      RCLCPP_INFO(this->get_logger(), "Obstacle Detected: Front & Right. Turning Left........");
       return;
     }
 
