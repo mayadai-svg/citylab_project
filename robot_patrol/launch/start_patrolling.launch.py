@@ -23,5 +23,6 @@ def generate_launch_description():
     )
 
     return launch.LaunchDescription([
-       patrol_node
+       patrol_node,
+       rviz_node
     ])
