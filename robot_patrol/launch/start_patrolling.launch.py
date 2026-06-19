@@ -4,7 +4,7 @@ import launch_ros.actions
 
 def generate_launch_description():
 
-    rviz_config_dir = '/home/user/ros2_ws/src/citylab_project/robot_patrol/src/real_robot_config.rviz'
+    rviz_config_dir = '/home/user/ros2_ws/src/citylab_project/robot_patrol/src/real_robot_rviz_config.rviz'
 
     # Nodes
     patrol_node = launch_ros.actions.Node(
