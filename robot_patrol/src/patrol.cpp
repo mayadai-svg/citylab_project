@@ -18,7 +18,7 @@ public:
             "/scan", 10,
             std::bind(&Patrol::laser_callback, this, std::placeholders::_1));
     vel_publisher_ = this->create_publisher<geometry_msgs::msg::Twist>(
-        "/fastbot_1/cmd_vel", 10);
+        "/cmd_vel", 10);
     control_timer_ = this->create_wall_timer(
         std::chrono::milliseconds(100),
         std::bind(&Patrol::control_loop_callback, this));
