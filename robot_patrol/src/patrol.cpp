@@ -15,7 +15,7 @@ public:
   Patrol() : Node("patrol_node") {
     laser_subscription_ =
         this->create_subscription<sensor_msgs::msg::LaserScan>(
-            "/fastbot_1/scan", 10,
+            "/scan", 10,
             std::bind(&Patrol::laser_callback, this, std::placeholders::_1));
     vel_publisher_ = this->create_publisher<geometry_msgs::msg::Twist>(
         "/fastbot_1/cmd_vel", 10);
