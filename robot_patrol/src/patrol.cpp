@@ -112,7 +112,6 @@ private:
   }
 
   void move_robot(double x, double y, double w) {
-    // Here you have the callback method
     // create a Twist message
     auto msg = geometry_msgs::msg::Twist();
     // define the linear x-axis velocity of /cmd_vel Topic parameter
@@ -182,11 +181,6 @@ private:
 
   // Create a control callback loop that runs at 10 Hz.
   void control_loop_callback() {
-    // At every iteration of the control loop, publish the proper velocity command to the topic, based on the values detected by the laser.
-    // The linear velocity in X must always be 0.1 m/s.
-    // Take the value of the variable direction_ and use it to compute the proper angular velocity in Z:
-    // angular velocity in z = direction_ / 2.
-    
     double linear_x = 0.1;
     double angular_z = direction_ / 2.0;
     
