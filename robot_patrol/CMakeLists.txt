@@ -24,14 +24,17 @@ include_directories(include)
 # Create executables
 add_executable(patrol src/patrol.cpp)
 add_executable(direction_service src/direction_service.cpp)
-
 ament_target_dependencies(patrol rclcpp sensor_msgs geometry_msgs nav_msgs std_msgs tf2)
 ament_target_dependencies(direction_service rclcpp sensor_msgs geometry_msgs nav_msgs std_msgs tf2)
+
+add_executable(test_service src/test_service.cpp)
+ament_target_dependencies(test_service rclcpp)
 
 # Install executables
 install(TARGETS
   patrol
   direction_service
+  test_service
   DESTINATION lib/${PROJECT_NAME}
 )
 
