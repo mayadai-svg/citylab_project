@@ -16,15 +16,22 @@ find_package(std_srvs REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(tf2 REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
 
+# Include directories
+include_directories(include)
 
 # Create executables
 add_executable(patrol src/patrol.cpp)
+add_executable(direction_service src/direction_service.cpp)
+
 ament_target_dependencies(patrol rclcpp sensor_msgs geometry_msgs nav_msgs std_msgs tf2)
+ament_target_dependencies(direction_service rclcpp sensor_msgs geometry_msgs nav_msgs std_msgs tf2)
 
 # Install executables
 install(TARGETS
   patrol
+  direction_service
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -32,6 +39,11 @@ install(TARGETS
 install(DIRECTORY
   launch
   DESTINATION share/${PROJECT_NAME}
+)
+
+# Generate C++ and Python files from your custom service definition
+rosidl_generate_interfaces(${PROJECT_NAME}
+  "srv/GetDirection.srv"
 )
 
 if(BUILD_TESTING)
