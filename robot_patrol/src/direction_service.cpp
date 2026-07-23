@@ -15,7 +15,7 @@ public:
         std::bind(&DirectionService::direction_callback, this,
                   std::placeholders::_1, std::placeholders::_2));
 
-    RCLCPP_INFO(this->get_logger(), "Service [/direction_service] is ready.");
+    RCLCPP_INFO(this->get_logger(), "Service Server Ready: [/direction_service] is online.");  
   }
 
 private:
@@ -23,6 +23,9 @@ private:
       const std::shared_ptr<robot_patrol::srv::GetDirection::Request> request,
       std::shared_ptr<robot_patrol::srv::GetDirection::Response> response) {
     
+    // LOG MSG: Request Received
+    RCLCPP_INFO(this->get_logger(), "Request Received on /direction_service.");
+
     // Access laser scan data passed in request->laser_data
     const auto &laser_data = request->laser_data;
 
@@ -30,6 +33,7 @@ private:
     if (laser_data.ranges.empty() || laser_data.angle_increment == 0.0) {
       RCLCPP_WARN(this->get_logger(), "Received empty or invalid laser scan!");
       response->direction = "forward";
+      RCLCPP_INFO(this->get_logger(), "Request Completed with default direction: forward");
       return;
     }
 
@@ -70,7 +74,7 @@ private:
     }
 
     RCLCPP_INFO(this->get_logger(),
-                    "Front Min: %.2f m | Total Front: %.2f m | Total Left: %.2f m | Total Right: %.2f m",
+                    "Request Completed. Direction: %s | Front Min: %.2f m | Total Front: %.2f m | Total Left: %.2f m | Total Right: %.2f m",
                     front_min, total_dist_sec_front, total_dist_sec_left, total_dist_sec_right);    
     
     // Set response direction string (e.g., "forward", "left", "right")

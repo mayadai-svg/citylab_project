@@ -30,7 +30,7 @@ public:
     control_timer_ = this->create_wall_timer(
         100ms, std::bind(&Patrol::control_loop_callback, this));
 
-    RCLCPP_INFO(this->get_logger(), "Patrol node initialized with service client.");
+    RCLCPP_INFO(this->get_logger(), "Client Ready: patrol_with_service client initialized.");
   }
 
   ~Patrol() {}
@@ -75,6 +75,9 @@ private:
       auto request = std::make_shared<robot_patrol::srv::GetDirection::Request>();
       request->laser_data = last_laser_scan_;
 
+      // LOG MSG: Request Sent
+      RCLCPP_INFO(this->get_logger(), "Request Sent to /direction_service.");
+
       service_client_->async_send_request(
           request,
           std::bind(&Patrol::service_response_callback, this, std::placeholders::_1));
@@ -105,6 +108,7 @@ private:
     try {
       auto response = future.get();
       current_direction_ = response->direction;
+      RCLCPP_INFO(this->get_logger(), "Response Received: %s", current_direction_.c_str());
     } catch (const std::exception &e) {
       RCLCPP_ERROR(this->get_logger(), "Failed to get response from service: %s", e.what());
     }
