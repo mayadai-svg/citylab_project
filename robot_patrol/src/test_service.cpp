@@ -1,58 +1,83 @@
-#include <rclcpp/rclcpp.hpp>
 #include <chrono>
+#include <memory>
+
+#include "rclcpp/rclcpp.hpp"
+#include "sensor_msgs/msg/laser_scan.hpp"
+#include "robot_patrol/srv/get_direction.hpp"
 
 using namespace std::chrono_literals;
 
-class LogDemo : public rclcpp::Node
-{
+class TestService : public rclcpp::Node {
 public:
-    LogDemo() : Node("logger_example")
-    {
-        // Logger level configuration - Uncomment 1 line to set a specific log level
-        // Note: In C++, you can also set log levels via command line with --ros-args --log-level DEBUG
-        
-        auto ret = rcutils_logging_set_logger_level(this->get_logger().get_name(), RCUTILS_LOG_SEVERITY_DEBUG);
-        // auto ret = rcutils_logging_set_logger_level(this->get_logger().get_name(), RCUTILS_LOG_SEVERITY_INFO);
-        // auto ret = rcutils_logging_set_logger_level(this->get_logger().get_name(), RCUTILS_LOG_SEVERITY_WARN);
-        // auto ret = rcutils_logging_set_logger_level(this->get_logger().get_name(), RCUTILS_LOG_SEVERITY_ERROR);
-        // auto ret = rcutils_logging_set_logger_level(this->get_logger().get_name(), RCUTILS_LOG_SEVERITY_FATAL);
-        
-        if (ret != RCUTILS_RET_OK) {
-             RCLCPP_ERROR(this->get_logger(), "Failed to set logger level");
-         }
-        
-        // Create a timer with 200ms interval (0.2 seconds)
-        timer_ = this->create_wall_timer(
-            200ms, std::bind(&LogDemo::timer_callback, this));
-    }
+  TestService() : Node("test_service_node"), has_laser_scan_(false) {
+    // Subscriber to store the latest laser scan from fastbot_1
+    laser_sub_ = this->create_subscription<sensor_msgs::msg::LaserScan>(
+        "/fastbot_1/scan", 10,
+        std::bind(&TestService::laser_callback, this, std::placeholders::_1));
+
+    // Service Client for /direction_service
+    service_client_ = this->create_client<robot_patrol::srv::GetDirection>("/direction_service");
+
+    // Timer running every 1 second to request direction from the service
+    timer_ = this->create_wall_timer(
+        1s, std::bind(&TestService::timer_callback, this));
+
+    RCLCPP_INFO(this->get_logger(), "TestService node initialized.");
+  }
 
 private:
-    void timer_callback()
-    {
-        // prints a ROS2 log debugging
-        RCLCPP_DEBUG(this->get_logger(), "Laser sensor detected, ready for distance measurements.");
-        // prints a ROS2 log info
-        RCLCPP_INFO(this->get_logger(), "All systems operational, robot ready to proceed.");
-        // prints a ROS2 log warning
-        RCLCPP_WARN(this->get_logger(), "Motor temperature approaching limit, monitoring closely.");
-        // prints a ROS2 log error
-        RCLCPP_ERROR(this->get_logger(), "Motor failure detected, unable to proceed with movement!");
-        // prints a ROS2 log fatal
-        RCLCPP_FATAL(this->get_logger(), "Critical error: Collision detected, emergency stop activated!");
+  void laser_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg) {
+    // Store latest scan and set flag
+    last_laser_scan_ = *msg;
+    has_laser_scan_ = true;
+  }
+
+  void timer_callback() {
+    if (!has_laser_scan_) {
+      RCLCPP_WARN(this->get_logger(), "Waiting for first laser scan data...");
+      return;
     }
-    
-    rclcpp::TimerBase::SharedPtr timer_;
+
+    if (!service_client_->service_is_ready()) {
+      RCLCPP_WARN(this->get_logger(), "Service [/direction_service] is not available yet.");
+      return;
+    }
+
+    // Create the service request using stored laser scan
+    auto request = std::make_shared<robot_patrol::srv::GetDirection::Request>();
+    request->laser_data = last_laser_scan_;
+
+    // Send request asynchronously
+    service_client_->async_send_request(
+        request,
+        std::bind(&TestService::response_callback, this, std::placeholders::_1));
+  }
+
+  void response_callback(
+      rclcpp::Client<robot_patrol::srv::GetDirection>::SharedFuture future) {
+    try {
+      auto response = future.get();
+      RCLCPP_INFO(this->get_logger(), "Service Response Direction: %s", response->direction.c_str());
+    } catch (const std::exception &e) {
+      RCLCPP_ERROR(this->get_logger(), "Failed to get service response: %s", e.what());
+    }
+  }
+
+  // Member variables
+  rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr laser_sub_;
+  rclcpp::Client<robot_patrol::srv::GetDirection>::SharedPtr service_client_;
+  rclcpp::TimerBase::SharedPtr timer_;
+
+  sensor_msgs::msg::LaserScan last_laser_scan_;
+  bool has_laser_scan_;
 };
 
-int main(int argc, char * argv[])
-{
-    // initialize the ROS communication
-    rclcpp::init(argc, argv);
-    // declare the node constructor
-    auto log_demo = std::make_shared<LogDemo>();
-    // pause the program execution, waits for a request to kill the node (ctrl+c)
-    rclcpp::spin(log_demo);
-    // shutdown the ROS communication
-    rclcpp::shutdown();
-    return 0;
+int main(int argc, char **argv) {
+  rclcpp::init(argc, argv);
+
+  auto node = std::make_shared<TestService>();
+  rclcpp::spin(node);
+
+  rclcpp::shutdown();
+  return 0;
 }

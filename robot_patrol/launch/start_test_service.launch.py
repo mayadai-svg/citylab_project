@@ -9,8 +9,9 @@ def generate_launch_description():
     test_service_node = launch_ros.actions.Node(
         package='robot_patrol',
         executable='test_service',
+        name= 'test_service',
         arguments=[],
-        emulate_tty=True,
+        # emulate_tty=True,
         output='screen',
     )
 
