@@ -9,6 +9,7 @@ def generate_launch_description():
     service_node = launch_ros.actions.Node(
         package='robot_patrol',
         executable='direction_service',
+        name= 'direction_service',
         arguments=[],
         output='screen',
     )
