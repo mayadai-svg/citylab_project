@@ -83,7 +83,7 @@ private:
           std::bind(&Patrol::service_response_callback, this, std::placeholders::_1));
     } else {
       RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 2000,
-                           "Waiting for [/direction_service] server...");
+                           "Waiting for /direction_service server...");
     }
 
     // Compute angular velocity based on latest direction returned by service

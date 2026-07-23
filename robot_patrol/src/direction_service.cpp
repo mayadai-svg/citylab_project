@@ -15,7 +15,7 @@ public:
         std::bind(&DirectionService::direction_callback, this,
                   std::placeholders::_1, std::placeholders::_2));
 
-    RCLCPP_INFO(this->get_logger(), "Service Server Ready: [/direction_service] is online.");  
+    RCLCPP_INFO(this->get_logger(), "Service Server Ready: /direction_service is online.");  
   }
 
 private:
@@ -74,7 +74,7 @@ private:
     }
 
     RCLCPP_INFO(this->get_logger(),
-                    "Request Completed. Direction: %s | Front Min: %.2f m | Total Front: %.2f m | Total Left: %.2f m | Total Right: %.2f m",
+                    "Front Min: %.2f m | Total Front: %.2f m | Total Left: %.2f m | Total Right: %.2f m",
                     front_min, total_dist_sec_front, total_dist_sec_left, total_dist_sec_right);    
     
     // Set response direction string (e.g., "forward", "left", "right")
@@ -92,7 +92,7 @@ private:
       }
     }
 
-    RCLCPP_INFO(this->get_logger(), "Selected safest direction: %s", response->direction.c_str());
+    RCLCPP_INFO(this->get_logger(), "Request Completed. Selected safest direction: %s", response->direction.c_str());
   }
 
   rclcpp::Service<robot_patrol::srv::GetDirection>::SharedPtr service_;
