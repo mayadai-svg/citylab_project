@@ -29,12 +29,12 @@ public:
         std::bind(&GoToPose::handle_cancel, this, std::placeholders::_1),
         std::bind(&GoToPose::handle_accepted, this, std::placeholders::_1));
 
-    // 2. Subscribe to odometry topic (/fastbot_1/odom)
+    // 2. Subscribe to odometry topic (/odom)
     odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
         "/odom", 10,
         std::bind(&GoToPose::odom_callback, this, std::placeholders::_1));
 
-    // 3. Publisher to velocity command topic (/fastbot_1/cmd_vel)
+    // 3. Publisher to velocity command topic (/cmd_vel)
     vel_pub_ = this->create_publisher<geometry_msgs::msg::Twist>("/cmd_vel", 10);
 
     RCLCPP_INFO(this->get_logger(), "Action Server Ready: /go_to_pose initialized.");
