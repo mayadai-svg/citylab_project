@@ -16,15 +16,42 @@ find_package(std_srvs REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(tf2 REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
 
+# Generate custom service interfaces
+rosidl_generate_interfaces(${PROJECT_NAME}
+  "srv/GetDirection.srv"
+  DEPENDENCIES sensor_msgs
+)
+
+# Get C++ typesupport target
+rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 # Create executables
 add_executable(patrol src/patrol.cpp)
 ament_target_dependencies(patrol rclcpp sensor_msgs geometry_msgs nav_msgs std_msgs tf2)
 
+add_executable(direction_service src/direction_service.cpp)
+ament_target_dependencies(direction_service rclcpp sensor_msgs)
+target_link_libraries(direction_service "${cpp_typesupport_target}")
+add_dependencies(direction_service ${PROJECT_NAME}__rosidl_generator_cpp)
+
+add_executable(patrol_with_service src/patrol_with_service.cpp)
+ament_target_dependencies(patrol_with_service rclcpp sensor_msgs geometry_msgs nav_msgs)
+target_link_libraries(patrol_with_service "${cpp_typesupport_target}")
+add_dependencies(patrol_with_service ${PROJECT_NAME}__rosidl_generator_cpp)
+
+add_executable(test_service src/test_service.cpp)
+ament_target_dependencies(test_service rclcpp sensor_msgs)
+target_link_libraries(test_service "${cpp_typesupport_target}")
+add_dependencies(test_service ${PROJECT_NAME}__rosidl_generator_cpp)
+
 # Install executables
 install(TARGETS
   patrol
+  direction_service
+  patrol_with_service
+  test_service
   DESTINATION lib/${PROJECT_NAME}
 )
 
