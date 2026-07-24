@@ -211,7 +211,7 @@ private:
           result->status = true;
           goal_handle->succeed(result);
           RCLCPP_INFO(this->get_logger(),
-                      "Goal reached! Pos error: %.3f m, Theta error: %.2f deg",
+                      "Goal Completed: Reached target pose! Position error: %.3f m, Theta error: %.2f deg",
                       pos_error, std::abs(yaw_error) * 180.0 / M_PI);
           return;
         }
