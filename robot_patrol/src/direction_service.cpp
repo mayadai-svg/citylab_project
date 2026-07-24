@@ -57,18 +57,18 @@ private:
       }
 
       // 1) Right sector (Blue): -90° to -30° [-PI/2, -PI/6]
-      if (angle >= -M_PI / 2.0 && angle < -M_PI / 6.0) {
+      if (angle >= -M_PI / 2.0 && angle < -M_PI / 12.0) {
         total_dist_sec_right += range;
       } 
       // 2) Front sector (Green): -30° to +30° [-PI/6, PI/6]
-      else if (angle >= -M_PI / 6.0 && angle <= M_PI / 6.0) {
+      else if (angle >= -M_PI / 12.0 && angle <= M_PI / 12.0) {
         total_dist_sec_front += range;
         if (range < front_min) {
         front_min = range;
         }
       } 
       // 3) Left sector (Red): +30° to +90° [PI/6, PI/2]
-      else if (angle > M_PI / 6.0 && angle <= M_PI / 2.0) {
+      else if (angle > M_PI / 12.0 && angle <= M_PI / 2.0) {
         total_dist_sec_left += range;
       }
     }
