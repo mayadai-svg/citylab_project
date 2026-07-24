@@ -8,6 +8,7 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rclcpp_action REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
@@ -16,11 +17,13 @@ find_package(std_srvs REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(tf2 REQUIRED)
+find_package(tf2_ros REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
 # Generate custom service interfaces
 rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/GetDirection.srv"
+  "action/GoToPose.action"
   DEPENDENCIES sensor_msgs
 )
 
@@ -42,7 +45,7 @@ add_dependencies(direction_service ${PROJECT_NAME}__rosidl_generator_cpp)
 
 # 3. Patrol with Service Executable (Client)
 add_executable(patrol_with_service src/patrol_with_service.cpp)
-ament_target_dependencies(patrol_with_service rclcpp sensor_msgs geometry_msgs nav_msgs)
+ament_target_dependencies(patrol_with_service rclcpp rclcpp_action sensor_msgs geometry_msgs nav_msgs)
 target_link_libraries(patrol_with_service "${cpp_typesupport_target}")
 add_dependencies(patrol_with_service ${PROJECT_NAME}__rosidl_generator_cpp)
 
@@ -52,12 +55,18 @@ ament_target_dependencies(test_service rclcpp sensor_msgs)
 target_link_libraries(test_service "${cpp_typesupport_target}")
 add_dependencies(test_service ${PROJECT_NAME}__rosidl_generator_cpp)
 
+add_executable(go_to_pose_action src/go_to_pose_action.cpp)
+ament_target_dependencies(go_to_pose_action rclcpp rclcpp_action sensor_msgs geometry_msgs nav_msgs tf2 tf2_ros)
+target_link_libraries(go_to_pose_action "${cpp_typesupport_target}")
+add_dependencies(go_to_pose_action ${PROJECT_NAME}__rosidl_generator_cpp)
+
 # Install executables
 install(TARGETS
   patrol
   direction_service
   patrol_with_service
   test_service
+  go_to_pose_action
   DESTINATION lib/${PROJECT_NAME}
 )
 
