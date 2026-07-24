@@ -29,7 +29,7 @@ public:
         std::bind(&GoToPose::handle_cancel, this, std::placeholders::_1),
         std::bind(&GoToPose::handle_accepted, this, std::placeholders::_1));
 
-    // 2. Subscribe to odometry topic (/odom or /fastbot_1/odom)
+    // 2. Subscribe to odometry topic (/fastbot_1/odom)
     odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
         "/odom", 10,
         std::bind(&GoToPose::odom_callback, this, std::placeholders::_1));
@@ -148,7 +148,7 @@ private:
       // Ensure odometry data has been received
       if (!has_odom_) {
         RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 2000,
-                             "Waiting for odometry message on /fastbot_1/odom or /odom...");
+                             "Waiting for odometry message on /odom...");
         loop_rate.sleep();
         continue;
       }
