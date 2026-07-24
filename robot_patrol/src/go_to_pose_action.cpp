@@ -31,16 +31,11 @@ public:
 
     // 2. Subscribe to odometry topic (/odom or /fastbot_1/odom)
     odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
-        "/fastbot_1/odom", 10,
-        std::bind(&GoToPose::odom_callback, this, std::placeholders::_1));
-
-    // Fallback/secondary subscription if published on /odom
-    odom_sub_backup_ = this->create_subscription<nav_msgs::msg::Odometry>(
         "/odom", 10,
         std::bind(&GoToPose::odom_callback, this, std::placeholders::_1));
 
     // 3. Publisher to velocity command topic (/fastbot_1/cmd_vel)
-    vel_pub_ = this->create_publisher<geometry_msgs::msg::Twist>("/fastbot_1/cmd_vel", 10);
+    vel_pub_ = this->create_publisher<geometry_msgs::msg::Twist>("/cmd_vel", 10);
 
     RCLCPP_INFO(this->get_logger(), "Action Server Ready: /go_to_pose initialized.");
   }
@@ -54,7 +49,6 @@ private:
   // Node handles
   rclcpp_action::Server<GoToPoseAction>::SharedPtr action_server_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
-  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_backup_;
   rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr vel_pub_;
 
   // Normalize angle to [-pi, pi] range
