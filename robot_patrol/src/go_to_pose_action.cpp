@@ -34,11 +34,6 @@ public:
         "/fastbot_1/odom", 10,
         std::bind(&GoToPose::odom_callback, this, std::placeholders::_1));
 
-    // Fallback/secondary subscription if published on /odom
-    odom_sub_backup_ = this->create_subscription<nav_msgs::msg::Odometry>(
-        "/odom", 10,
-        std::bind(&GoToPose::odom_callback, this, std::placeholders::_1));
-
     // 3. Publisher to velocity command topic (/fastbot_1/cmd_vel)
     vel_pub_ = this->create_publisher<geometry_msgs::msg::Twist>("/fastbot_1/cmd_vel", 10);
 
@@ -54,7 +49,6 @@ private:
   // Node handles
   rclcpp_action::Server<GoToPoseAction>::SharedPtr action_server_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
-  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_backup_;
   rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr vel_pub_;
 
   // Normalize angle to [-pi, pi] range
@@ -154,7 +148,7 @@ private:
       // Ensure odometry data has been received
       if (!has_odom_) {
         RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 2000,
-                             "Waiting for odometry message on /fastbot_1/odom or /odom...");
+                             "Waiting for odometry message on /fastbot_1/odom...");
         loop_rate.sleep();
         continue;
       }
