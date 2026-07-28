@@ -91,9 +91,9 @@ private:
     double angular_z = 0.0;
 
     if (current_direction_ == "left") {
-      angular_z = 0.5;
+      angular_z = 0.7;
     } else if (current_direction_ == "right") {
-      angular_z = -0.5;
+      angular_z = -0.7;
     } else {
       angular_z = 0.0; // "forward"
     }

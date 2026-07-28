@@ -40,7 +40,10 @@ private:
     double total_dist_sec_right = 0.0;
     double total_dist_sec_front = 0.0;
     double total_dist_sec_left = 0.0;
+
     double front_min = std::numeric_limits<double>::infinity();
+    double left_min  = std::numeric_limits<double>::infinity();
+    double right_min = std::numeric_limits<double>::infinity();
 
     // Define 3 sections of 60 degrees each (-90 deg to +90 deg total FOV):
     // Right: [-90°, -30°] -> [-M_PI/2, -M_PI/6]
@@ -51,14 +54,17 @@ private:
       double angle = laser_data.angle_min + (i * laser_data.angle_increment);
       double range = laser_data.ranges[i];
 
-      // Ignore invalid readings (NaN, Inf, or out-of-bounds)
-      if (!std::isfinite(range) || range < laser_data.range_min || range > laser_data.range_max) {
-        continue;
+      // FIX 1: Treat inf or out-of-max-range as max open space distance
+      if (!std::isfinite(range) || range > laser_data.range_max) {
+        range = laser_data.range_max;
+      } else if (range < laser_data.range_min) {
+        continue; // Only skip noise below minimum physical range
       }
 
       // 1) Right sector (Blue): -90° to -30° [-PI/2, -PI/6]
       if (angle >= -M_PI / 2.0 && angle < -M_PI / 6.0) {
         total_dist_sec_right += range;
+        if (range < right_min) right_min = range;
       } 
       // 2) Front sector (Green): -30° to +30° [-PI/6, PI/6]
       else if (angle >= -M_PI / 6.0 && angle <= M_PI / 6.0) {
@@ -70,12 +76,13 @@ private:
       // 3) Left sector (Red): +30° to +90° [PI/6, PI/2]
       else if (angle > M_PI / 6.0 && angle <= M_PI / 2.0) {
         total_dist_sec_left += range;
+        if (range < left_min) left_min = range;
       }
     }
 
     RCLCPP_INFO(this->get_logger(),
-                    "Front Min: %.2f m | Total Front: %.2f m | Total Left: %.2f m | Total Right: %.2f m",
-                    front_min, total_dist_sec_front, total_dist_sec_left, total_dist_sec_right);    
+                "FRONT Min: %.2f m, Total: %.2f m | LEFT Min: %.2f m, Total: %.2f m | RIGHT Min: %.2f m, Total: %.2f m",
+                front_min, total_dist_sec_front, left_min, total_dist_sec_left, right_min, total_dist_sec_right);
     
     // Set response direction string (e.g., "forward", "left", "right")
     // Decision Logic:
@@ -83,12 +90,19 @@ private:
     if (front_min > 0.35) {
       response->direction = "forward";
     } 
-    // 2. Otherwise, turn towards the side with the larger total distance sum
+    // 2. Otherwise, select the direction with the larger MINIMUM clearance
     else {
-      if (total_dist_sec_left > total_dist_sec_right) {
+      if (left_min > right_min) {
         response->direction = "left";
-      } else {
+      } else if (right_min > left_min) {
         response->direction = "right";
+      } else {
+        // Fallback tie-breaker: compare total sector sums
+        if (total_dist_sec_left >= total_dist_sec_right) {
+          response->direction = "left";
+        } else {
+          response->direction = "right";
+        }
       }
     }
 
