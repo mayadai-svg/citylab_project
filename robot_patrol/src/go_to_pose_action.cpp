@@ -131,8 +131,8 @@ private:
 
     // Tolerances specified in requirements
     const double pos_tolerance = 0.075;                        // 0.075 m (7.5 cm)
-    const double orientation_tolerance = 10.0 * M_PI / 180.0; // 10 degrees in radians
-
+    const double orientation_tolerance = 5.0 * M_PI / 180.0; // 5 degrees in radians
+    
     // RCLCPP_INFO(this->get_logger(), "Executing GoToPose control loop...");
 
     while (rclcpp::ok()) {
@@ -180,7 +180,7 @@ private:
             normalize_angle(goal_direction - current_pos_.theta);
 
         // Turn towards goal direction
-        angular_z = std::clamp(2.0 * heading_error, -1.0, 1.0);
+        angular_z = std::clamp(1.5 * heading_error, -0.8, 0.8);
 
         // Move forward at 0.2 m/s when heading error is small (< ~11.5 degrees / 0.2 rad)
         if (std::abs(heading_error) < 0.2) {
@@ -197,7 +197,7 @@ private:
         // Rotate until final orientation is within 10 degrees tolerance
         if (std::abs(yaw_error) > orientation_tolerance) {
           linear_x = 0.0;
-          angular_z = std::clamp(2.0 * yaw_error, -1.0, 1.0);
+          angular_z = std::clamp(1.5 * yaw_error, -0.4, 0.4);
         }
         // Case 3: Goal position AND orientation reached within tolerance
         else {
